@@ -2,10 +2,11 @@ import { useEffect, useMemo } from 'react'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 
-useGLTF.preload('/simple_asaro_head.glb')
+const modelPath = import.meta.env.BASE_URL + 'simple_asaro_head.glb'
+useGLTF.preload(modelPath)
 
 export default function AsaroHead() {
-  const { scene } = useGLTF('/simple_asaro_head.glb')
+  const { scene } = useGLTF(modelPath)
 
   useEffect(() => {
     scene.traverse((child) => {
