@@ -1,0 +1,61 @@
+:root {
+  --text: #b7c0cf;
+  --muted: #7f899a;
+  --title: #f6f7fb;
+  --border: rgba(255, 255, 255, 0.08);
+  --bg: #080b12;
+  --sans: 'Avenir Next', 'SF Pro Display', 'Segoe UI', 'Helvetica Neue', sans-serif;
+  --heading: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  font-family: var(--sans);
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+#root {
+  flex: 1;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+canvas {
+  display: block;
+}
+
+::selection {
+  background: rgba(245, 158, 11, 0.32);
+  color: #fff;
+}
