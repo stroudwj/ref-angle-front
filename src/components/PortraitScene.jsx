@@ -116,8 +116,8 @@ const PortraitScene = forwardRef(function PortraitScene(
     <div
       className="scene-card__viewport"
       style={{
+        width: '100%',
         height: '100%',
-        minHeight: '72svh',
         display: 'flex',
         flexDirection: 'column',
       }}
@@ -126,8 +126,8 @@ const PortraitScene = forwardRef(function PortraitScene(
         className="scene-card__canvas"
         style={{
           flex: 1,
-          minHeight: '72svh',
           width: '100%',
+          height: '100%',
           position: 'relative',
         }}
       >

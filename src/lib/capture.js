@@ -190,19 +190,24 @@ function createDepthMaterial(camera) {
   })
 }
 function capturePass({ gl, scene, camera, kind }) {
-  const pixelRatio = Math.min(gl.getPixelRatio(), 2)
-  const width = Math.max(1, Math.round(gl.domElement.clientWidth * pixelRatio))
-  const height = Math.max(1, Math.round(gl.domElement.clientHeight * pixelRatio))
+  const width = 1024
+  const height = 1024
+
+  // Clone the camera to modify its aspect ratio for the capture
+  // without affecting the live scene viewport.
+  const captureCamera = camera.clone()
+  captureCamera.aspect = width / height
+  captureCamera.updateProjectionMatrix()
 
   if (kind === 'depth') {
-    const material = createDepthMaterial(camera)
-    const pixels = renderPass({ gl, scene, camera, material, width, height })
+    const material = createDepthMaterial(captureCamera)
+    const pixels = renderPass({ gl, scene, camera: captureCamera, material, width, height })
     material.dispose()
 
     return createCanvasFromPixels(pixels, width, height).toDataURL('image/png')
   }
 
-  const pixels = renderScenePass({ gl, scene, camera, width, height })
+  const pixels = renderScenePass({ gl, scene, camera: captureCamera, width, height })
   return createGrayscaleCanvasFromPixels(pixels, width, height).toDataURL('image/png')
 }
 

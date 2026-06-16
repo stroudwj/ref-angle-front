@@ -18,7 +18,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.85fr);
   gap: 24px;
-  align-items: stretch;
+  align-items: start;
 }
 
 .app-shell__header {
@@ -87,8 +87,8 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 72svh;
-  min-height: 640px;
+  aspect-ratio: 1 / 1;
+  width: 100%;
 }
 
 .scene-card__viewport {
@@ -275,8 +275,8 @@
   }
 
   .scene-card {
-    height: 68svh;
-    min-height: 560px;
+    height: auto;
+    min-height: auto;
   }
 }
 
@@ -287,8 +287,8 @@
   }
 
   .scene-card {
-    height: 75svh;
-    min-height: 400px;
+    height: auto;
+    min-height: auto;
   }
 
   .scene-card__viewport {

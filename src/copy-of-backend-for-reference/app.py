@@ -61,7 +61,10 @@ async def remix_face(
         contents = pil_faces + [pil_reference, prompt]
         response = client.models.generate_content(
             model='gemini-2.5-flash-image',
-            contents=contents
+            contents=contents,
+            config=types.GenerateContentConfig(
+                aspect_ratio="1:1"
+            )
         )
         
         # Extract the resulting image asset bytes
