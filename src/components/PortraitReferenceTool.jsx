@@ -2,6 +2,12 @@ import { useMemo, useRef, useState } from 'react'
 import { Leva, useControls } from 'leva'
 import PortraitScene from './PortraitScene'
 
+async function dataUrlToFile(dataUrl, filename) {
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  return new File([blob], filename, { type: blob.type });
+}
+
 function CaptureCard({ label, dataUrl, emptyLabel, kind }) {
   return (
     <section className="capture-card">
@@ -26,6 +32,9 @@ function CaptureCard({ label, dataUrl, emptyLabel, kind }) {
 export default function PortraitReferenceTool() {
   const sceneRef = useRef(null)
   const [isCapturing, setIsCapturing] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [faceImage, setFaceImage] = useState(null)
+  const [generatedImage, setGeneratedImage] = useState(null)
   const [captures, setCaptures] = useState({
     depthMap: '',
     shadowMap: '',
@@ -80,6 +89,43 @@ export default function PortraitReferenceTool() {
       setLightLabel(error instanceof Error ? error.message : 'Capture failed')
     } finally {
       setIsCapturing(false)
+    }
+  }
+
+  const generatePortrait = async () => {
+    const referenceDataUrl = captures.shadowMap || captures.depthMap;
+    if (!faceImage || !referenceDataUrl) {
+      setLightLabel('Missing face image or reference capture');
+      return;
+    }
+
+    setIsGenerating(true);
+    setLightLabel('Generating portrait via AI...');
+
+    try {
+      const referenceFile = await dataUrlToFile(referenceDataUrl, 'reference.png');
+      
+      const formData = new FormData();
+      formData.append('face_image', faceImage);
+      formData.append('reference_image', referenceFile);
+      
+      const response = await fetch('https://stroudw-ref-angle2.hf.space/remix-face', {
+          method: 'POST',
+          body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`API returned ${response.status}`);
+      }
+      
+      const imageBlob = await response.blob();
+      const imageObjectURL = URL.createObjectURL(imageBlob);
+      setGeneratedImage(imageObjectURL);
+      setLightLabel('Portrait generated!');
+    } catch (error) {
+      setLightLabel(error instanceof Error ? error.message : 'Generation failed');
+    } finally {
+      setIsGenerating(false);
     }
   }
 
@@ -167,6 +213,43 @@ export default function PortraitReferenceTool() {
             </div>
 
             <div className="panel-card__section capture-note">{captureSummary}</div>
+
+            <div className="panel-card__section">
+              <h2 className="panel-title">AI Portrait Generation</h2>
+              <p className="panel-copy">
+                Upload a source face image. Then use the captured reference (shadow or depth map) to generate a new image matching this lighting and angle.
+              </p>
+              
+              <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={(e) => setFaceImage(e.target.files[0])}
+                  style={{ fontSize: '0.875rem' }}
+                />
+                
+                <button
+                  type="button"
+                  className="button"
+                  onClick={generatePortrait}
+                  disabled={isGenerating || !faceImage || (!captures.shadowMap && !captures.depthMap)}
+                  style={{ marginTop: '0.5rem' }}
+                >
+                  {isGenerating ? 'Generating...' : 'Generate AI Portrait'}
+                </button>
+              </div>
+            </div>
+
+            {generatedImage && (
+              <div className="panel-card__section">
+                <h2 className="panel-title">Generated Result</h2>
+                <img 
+                  src={generatedImage} 
+                  alt="AI Generated Portrait" 
+                  style={{ width: '100%', borderRadius: '8px', marginTop: '0.5rem' }} 
+                />
+              </div>
+            )}
           </aside>
         </section>
       </div>

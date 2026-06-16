@@ -1,0 +1,20 @@
+async function sendToNanoBanana() {
+    const faceFile = document.getElementById('faceInput').files[0];
+    const referenceFile = document.getElementById('referenceInput').files[0];
+    
+    const formData = new FormData();
+    formData.append('face_image', faceFile);
+    formData.append('reference_image', referenceFile);
+    
+    // Direct network call out to his Hugging Face Space endpoint
+    const response = await fetch('https://stroudw-ref-angle2.hf.space/remix-face', {
+        method: 'POST',
+        body: formData
+    });
+    
+    const imageBlob = await response.blob();
+    const imageObjectURL = URL.createObjectURL(imageBlob);
+    
+    // Display the resulting modified image onto the web page
+    document.getElementById('resultImage').src = imageObjectURL;
+}
