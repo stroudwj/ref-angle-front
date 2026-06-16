@@ -1,5 +1,6 @@
 import os
 import io
+from typing import List
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
@@ -30,36 +31,37 @@ def home():
 
 @app.post("/remix-face")
 async def remix_face(
-    face_image: UploadFile = File(...),
+    face_images: List[UploadFile] = File(...),
     reference_image: UploadFile = File(...)
 ):
     try:
-        # Read the raw uploaded bytes from the frontend
-        face_bytes = await face_image.read()
+        # Process the list of face images
+        pil_faces = []
+        for face_img in face_images:
+            face_bytes = await face_img.read()
+            pil_faces.append(Image.open(io.BytesIO(face_bytes)))
+            
+        # Process the single reference image
         reference_bytes = await reference_image.read()
-        
-        # Open bytes as PIL images for Google SDK compatibility
-        pil_face = Image.open(io.BytesIO(face_bytes))
         pil_reference = Image.open(io.BytesIO(reference_bytes))
         
-        # Formulate the multi-image composition prompt for Nano Banana
+        # Formulate the multi-image composition prompt
         prompt = (
-            "Analyze the two provided images: the first image is a person's face, "
-            "and the second image is a 3D Asaro head render showing desired lighting and angle. "
-            "Generate a new output image that preserves 100% of the facial features, identity, and skin textures from the "
-            "first image, but entirely remixes its physical orientation, yaw, pitch, and directional shadow casting "
-            "to mimic the exact 3D angle and lighting of the Asaro head reference."
+            f"You are an expert lighting and 3D artist. You have {len(pil_faces) + 1} input images:\n"
+            f"The first {len(pil_faces)} image(s) show the Subject: A person's face from various angles.\n"
+            "The final image is the Pose & Lighting Reference: A grayscale 3D render of an Asaro head.\n\n"
+            "TASK: Generate a new portrait of the Subject. You MUST change the subject's head angle "
+            "to match the Pose Reference. You MUST apply the exact shadow patterns from the Pose Reference. "
+            "Use the multiple photos of the subject to preserve 100% of their identity and facial features. "
+            "Do not just copy the original Subject images; you must rotate their head and change "
+            "the lighting to match the Asaro head perfectly."
         )
         
-        # Execute the multi-image generation call to Nano Banana (Gemini 2.5 Flash Image)
-        # Pass both images inside the contents array along with the string instructions
+        # Execute the multi-image generation call
+        contents = pil_faces + [pil_reference, prompt]
         response = client.models.generate_content(
             model='gemini-2.5-flash-image',
-            contents=[
-                pil_face,
-                pil_reference,
-                prompt
-            ]
+            contents=contents
         )
         
         # Extract the resulting image asset bytes

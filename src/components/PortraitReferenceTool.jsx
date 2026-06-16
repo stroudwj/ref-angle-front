@@ -33,7 +33,7 @@ export default function PortraitReferenceTool() {
   const sceneRef = useRef(null)
   const [isCapturing, setIsCapturing] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
-  const [faceImage, setFaceImage] = useState(null)
+  const [faceImages, setFaceImages] = useState([])
   const [generatedImage, setGeneratedImage] = useState(null)
   const [captures, setCaptures] = useState({
     depthMap: '',
@@ -94,8 +94,8 @@ export default function PortraitReferenceTool() {
 
   const generatePortrait = async () => {
     const referenceDataUrl = captures.shadowMap || captures.depthMap;
-    if (!faceImage || !referenceDataUrl) {
-      setLightLabel('Missing face image or reference capture');
+    if (faceImages.length === 0 || !referenceDataUrl) {
+      setLightLabel('Missing face images or reference capture');
       return;
     }
 
@@ -106,7 +106,9 @@ export default function PortraitReferenceTool() {
       const referenceFile = await dataUrlToFile(referenceDataUrl, 'reference.png');
       
       const formData = new FormData();
-      formData.append('face_image', faceImage);
+      faceImages.forEach((file) => {
+        formData.append('face_images', file);
+      });
       formData.append('reference_image', referenceFile);
       
       const response = await fetch('https://stroudw-ref-angle2.hf.space/remix-face', {
@@ -224,15 +226,21 @@ export default function PortraitReferenceTool() {
                 <input 
                   type="file" 
                   accept="image/*" 
-                  onChange={(e) => setFaceImage(e.target.files[0])}
+                  multiple
+                  onChange={(e) => setFaceImages(Array.from(e.target.files))}
                   style={{ fontSize: '0.875rem' }}
                 />
+                {faceImages.length > 0 && (
+                  <span style={{ fontSize: '0.75rem', color: 'gray' }}>
+                    {faceImages.length} image(s) selected
+                  </span>
+                )}
                 
                 <button
                   type="button"
                   className="button"
                   onClick={generatePortrait}
-                  disabled={isGenerating || !faceImage || (!captures.shadowMap && !captures.depthMap)}
+                  disabled={isGenerating || faceImages.length === 0 || (!captures.shadowMap && !captures.depthMap)}
                   style={{ marginTop: '0.5rem' }}
                 >
                   {isGenerating ? 'Generating...' : 'Generate AI Portrait'}

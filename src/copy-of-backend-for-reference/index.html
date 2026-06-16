@@ -1,9 +1,16 @@
 async function sendToNanoBanana() {
-    const faceFile = document.getElementById('faceInput').files[0];
+    const faceFiles = document.getElementById('faceInput').files;
     const referenceFile = document.getElementById('referenceInput').files[0];
     
+    if (faceFiles.length === 0 || !referenceFile) {
+        alert("Please select at least one face image and a reference image.");
+        return;
+    }
+
     const formData = new FormData();
-    formData.append('face_image', faceFile);
+    for (let i = 0; i < faceFiles.length; i++) {
+        formData.append('face_images', faceFiles[i]);
+    }
     formData.append('reference_image', referenceFile);
     
     // Direct network call out to his Hugging Face Space endpoint
