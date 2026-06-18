@@ -37,7 +37,7 @@ function SceneLights({ lightPosition, lightIntensity, lightColor, ambientIntensi
 }
 
 const PortraitScene = forwardRef(function PortraitScene(
-  { onLightPositionChange, lighting },
+  { onLightPositionChange, lighting, modelType },
   ref,
 ) {
   const apiRef = useRef(null)
@@ -148,11 +148,11 @@ const PortraitScene = forwardRef(function PortraitScene(
           <Suspense
             fallback={
               <Html center>
-                <div className="overlay-pill">Loading Asaro head...</div>
+                <div className="overlay-pill">Loading model...</div>
               </Html>
             }
           >
-            <AsaroHead />
+            <AsaroHead modelType={modelType} />
             <group ref={captureHelperRef}>
               <LightTransformGizmo
                 position={lightPosition}

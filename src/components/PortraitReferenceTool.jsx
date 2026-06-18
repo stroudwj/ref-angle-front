@@ -8,43 +8,38 @@ async function dataUrlToFile(dataUrl, filename) {
   return new File([blob], filename, { type: blob.type });
 }
 
-function CaptureCard({ label, dataUrl, emptyLabel, kind }) {
-  return (
-    <section className="capture-card">
-      <div className="capture-card__label">
-        <span>{label}</span>
-        <span>{kind}</span>
-      </div>
-
-      {dataUrl ? (
-        <img className="capture-preview" src={dataUrl} alt={`${label} preview`} />
-      ) : (
-        <div className="capture-missing">{emptyLabel}</div>
-      )}
-
-      {dataUrl ? (
-        <div className="capture-meta">Data URL ready: {dataUrl.length.toLocaleString()} chars</div>
-      ) : null}
-    </section>
-  )
-}
-
 export default function PortraitReferenceTool() {
   const sceneRef = useRef(null)
   const [isCapturing, setIsCapturing] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [faceImages, setFaceImages] = useState([])
+  const [facePreview, setFacePreview] = useState(null)
   const [generatedImage, setGeneratedImage] = useState(null)
+  const [activeMap, setActiveMap] = useState('shadow')
   const [captures, setCaptures] = useState({
     depthMap: '',
     shadowMap: '',
   })
   const [lightLabel, setLightLabel] = useState('Ready')
+  const [modelType, setModelType] = useState('asaro')
   const lighting = useControls('Lighting', {
     intensity: { value: 2.8, min: 0, max: 8, step: 0.05 },
     color: { value: '#fff4db' },
     ambientIntensity: { value: 0.8, min: 0, max: 2, step: 0.01 },
   })
+
+  const handleFaceImagesChange = (e) => {
+    const files = Array.from(e.target.files)
+    setFaceImages(files)
+    if (facePreview) {
+      URL.revokeObjectURL(facePreview)
+    }
+    if (files.length > 0) {
+      setFacePreview(URL.createObjectURL(files[0]))
+    } else {
+      setFacePreview(null)
+    }
+  }
 
   const captureSummary = useMemo(() => {
     if (!captures.depthMap && !captures.shadowMap) {
@@ -93,7 +88,7 @@ export default function PortraitReferenceTool() {
   }
 
   const generatePortrait = async () => {
-    const referenceDataUrl = captures.shadowMap || captures.depthMap;
+    const referenceDataUrl = activeMap === 'shadow' ? captures.shadowMap : captures.depthMap;
     if (faceImages.length === 0 || !referenceDataUrl) {
       setLightLabel('Missing face images or reference capture');
       return;
@@ -156,10 +151,28 @@ export default function PortraitReferenceTool() {
               ref={sceneRef}
               lighting={lighting}
               onLightPositionChange={() => setLightLabel('Light updated')}
+              modelType={modelType}
             />
           </div>
 
           <aside className="panel-card">
+            <div className="panel-card__section">
+              <h2 className="panel-title">Model Selection</h2>
+              <select
+                value={modelType}
+                onChange={(e) => setModelType(e.target.value)}
+                className="map-dropdown"
+              >
+                <option value="asaro">Simple Asaro Head</option>
+                <option value="human">Detailed Human Head</option>
+              </select>
+              {modelType === 'human' && (
+                <p style={{ fontSize: '0.7rem', marginTop: '8px', color: '#a0a0a0' }}>
+                  "Human head" (<a href="https://skfb.ly/pqWLr" target="_blank" rel="noreferrer" style={{ color: '#fff' }}>https://skfb.ly/pqWLr</a>) by ADAMA is licensed under <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer" style={{ color: '#fff' }}>Creative Commons Attribution</a>.
+                </p>
+              )}
+            </div>
+
             <div className="panel-card__section">
               <h2 className="panel-title">Capture controls</h2>
               <p className="panel-copy">
@@ -199,66 +212,79 @@ export default function PortraitReferenceTool() {
               </div>
             </div>
 
-            <div className="panel-card__section capture-grid">
-              <CaptureCard
-                label="Depth Map"
-                kind="Greyscale geometry"
-                dataUrl={captures.depthMap}
-                emptyLabel="Capture a frame to populate the depth map preview."
-              />
-              <CaptureCard
-                label="Shadow Map"
-                kind="Greyscale falloff"
-                dataUrl={captures.shadowMap}
-                emptyLabel="Capture both maps to generate the lighting pass preview."
-              />
-            </div>
-
             <div className="panel-card__section capture-note">{captureSummary}</div>
-
-            <div className="panel-card__section">
-              <h2 className="panel-title">AI Portrait Generation</h2>
-              <p className="panel-copy">
-                Upload a source face image. Then use the captured reference (shadow or depth map) to generate a new image matching this lighting and angle.
-              </p>
-              
-              <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  multiple
-                  onChange={(e) => setFaceImages(Array.from(e.target.files))}
-                  style={{ fontSize: '0.875rem' }}
-                />
-                {faceImages.length > 0 && (
-                  <span style={{ fontSize: '0.75rem', color: 'gray' }}>
-                    {faceImages.length} image(s) selected
-                  </span>
-                )}
-                
-                <button
-                  type="button"
-                  className="button"
-                  onClick={generatePortrait}
-                  disabled={isGenerating || faceImages.length === 0 || (!captures.shadowMap && !captures.depthMap)}
-                  style={{ marginTop: '0.5rem' }}
-                >
-                  {isGenerating ? 'Generating...' : 'Generate AI Portrait'}
-                </button>
-              </div>
-            </div>
-
-            {generatedImage && (
-              <div className="panel-card__section">
-                <h2 className="panel-title">Generated Result</h2>
-                <img 
-                  src={generatedImage} 
-                  alt="AI Generated Portrait" 
-                  style={{ width: '100%', borderRadius: '8px', marginTop: '0.5rem' }} 
-                />
-              </div>
-            )}
           </aside>
+        </section>
+
+        <section className="pipeline-section">
+          <div className="pipeline-card">
+            <div className="pipeline-card__header">User Upload</div>
+            <div className="pipeline-card__content">
+              <input 
+                type="file" 
+                accept="image/*" 
+                multiple
+                onChange={handleFaceImagesChange}
+                style={{ fontSize: '0.875rem' }}
+              />
+              {facePreview ? (
+                <img className="pipeline-preview" src={facePreview} alt="Face preview" />
+              ) : (
+                <div className="pipeline-missing">Upload a source image</div>
+              )}
+              {faceImages.length > 0 && (
+                <span style={{ fontSize: '0.75rem', color: 'gray' }}>
+                  {faceImages.length} image(s) selected
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="pipeline-card">
+            <div className="pipeline-card__header">
+              <select 
+                value={activeMap} 
+                onChange={(e) => setActiveMap(e.target.value)}
+                className="map-dropdown"
+              >
+                <option value="shadow">Shadow Map</option>
+                <option value="depth">Depth Map</option>
+              </select>
+            </div>
+            <div className="pipeline-card__content">
+              {captures[activeMap + 'Map'] ? (
+                <img className="pipeline-preview" src={captures[activeMap + 'Map']} alt={`${activeMap} preview`} />
+              ) : (
+                <div className="pipeline-missing">Capture a frame to populate this map</div>
+              )}
+              {captures[activeMap + 'Map'] && (
+                <div className="capture-meta" style={{ marginTop: 'auto' }}>
+                  Data URL ready: {captures[activeMap + 'Map'].length.toLocaleString()} chars
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="pipeline-card">
+            <div className="pipeline-card__header">AI Generation</div>
+            <div className="pipeline-card__content">
+              {generatedImage ? (
+                <img className="pipeline-preview" src={generatedImage} alt="AI Generated Portrait" />
+              ) : (
+                <div className="pipeline-missing">Result will appear here</div>
+              )}
+              
+              <button
+                type="button"
+                className="button"
+                onClick={generatePortrait}
+                disabled={isGenerating || faceImages.length === 0 || (!captures.shadowMap && !captures.depthMap)}
+                style={{ marginTop: 'auto' }}
+              >
+                {isGenerating ? 'Generating...' : 'Generate Portrait'}
+              </button>
+            </div>
+          </div>
         </section>
       </div>
     </main>

@@ -16,9 +16,11 @@
 
 .app-shell__hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.85fr);
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
   gap: 24px;
   align-items: start;
+  max-width: 900px;
+  margin: 0 auto 40px auto;
 }
 
 .app-shell__header {
@@ -298,5 +300,83 @@
   .scene-card__overlay {
     inset: auto 14px 14px 14px;
     flex-direction: column;
+  }
+}
+
+
+.pipeline-section {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.pipeline-card {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: rgba(11, 14, 23, 0.72);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(18px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pipeline-card__header {
+  font-family: var(--heading);
+  color: var(--title);
+  font-size: 1.2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pipeline-card__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pipeline-preview {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 12px;
+  background: #0a0d16;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pipeline-missing {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 16px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.map-dropdown {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--title);
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.map-dropdown:focus {
+  border-color: #fbbf24;
+}
+
+@media (max-width: 900px) {
+  .pipeline-section {
+    grid-template-columns: 1fr;
   }
 }

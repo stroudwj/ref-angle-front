@@ -2,23 +2,30 @@ import { useEffect, useMemo } from 'react'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 
-const modelPath = import.meta.env.BASE_URL + 'simple_asaro_head.glb'
-useGLTF.preload(modelPath)
+const ASARO_PATH = import.meta.env.BASE_URL + 'simple_asaro_head.glb'
+const HUMAN_PATH = import.meta.env.BASE_URL + 'humanhead.glb'
 
-export default function AsaroHead() {
+useGLTF.preload(ASARO_PATH)
+useGLTF.preload(HUMAN_PATH)
+
+export default function AsaroHead({ modelType = 'asaro' }) {
+  const modelPath = modelType === 'human' ? HUMAN_PATH : ASARO_PATH;
   const { scene } = useGLTF(modelPath)
 
+  // Clone scene so we don't mutate the cached one when switching back and forth
+  const clonedScene = useMemo(() => scene.clone(), [scene])
+
   useEffect(() => {
-    scene.traverse((child) => {
+    clonedScene.traverse((child) => {
       if (child.isMesh) {
         child.castShadow = true
         child.receiveShadow = true
       }
     })
-  }, [scene])
+  }, [clonedScene])
 
   const frame = useMemo(() => {
-    const bounds = new THREE.Box3().setFromObject(scene)
+    const bounds = new THREE.Box3().setFromObject(clonedScene)
     const size = bounds.getSize(new THREE.Vector3())
     const center = bounds.getCenter(new THREE.Vector3())
     const height = Math.max(size.y, 0.001)
@@ -29,12 +36,12 @@ export default function AsaroHead() {
       scale,
       position: [offset.x, offset.y - 0.12, offset.z],
     }
-  }, [scene])
+  }, [clonedScene])
 
   return (
-    <group rotation={[0, Math.PI, 0]}>
+    <group rotation={[0, modelType === 'human' ? 0 : Math.PI, 0]}>
       <group position={frame.position} scale={frame.scale}>
-        <primitive object={scene} />
+        <primitive object={clonedScene} />
       </group>
     </group>
   )
